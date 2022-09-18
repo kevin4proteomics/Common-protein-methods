@@ -147,5 +147,3 @@ class ProteinQuan():
                 dims[cell.column_letter] = 19
         ws.column_dimensions['I'].width = 20
         wb.save(path+'/'+file)
-
-ProteinQuan.bradford(path='/Users/yen-yuyang/Dropbox/Mac/Desktop', slope=0.5, y_inter=0.01,loadingdye_conc=4)
