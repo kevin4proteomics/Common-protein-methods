@@ -11,6 +11,62 @@ from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Fo
 
 
 class ProteinQuan():
+    def standard_curve(dilution=1):
+        """
+        Input the concentrations of standard (e.g., BSA) in microgram per microliter and to corresponding A595 to
+        get the standard curve
+        :return: a plot of linear regression with the equation and R square printed on the plot.
+        """
+        conc = np.array([]) #empty arrays for data input
+        asb = np.array([])
+
+        sample_size = int(input('How many standards: '))
+        for i in range(sample_size): #use for loop to inquire the concentration and A595 of standards sequentially
+            i = i+1
+            c = float(input('Concentration (ug/uL) for standard No.'+str(i)+': '))
+            a = float(input('A595 for standard No.'+str(i)+': '))
+            conc = np.append(conc,c)
+            asb = np.append(asb,a)
+
+        #calculate related statistics for linear regression
+        slope, intercept, r_value, p_value, std_err = stats.linregress(conc,asb,)
+        print("Slope = ", round(slope,3))
+        print("Intercept = ", round(intercept,2))
+        print("R-squared = ", round(r_value ** 2,2))
+        print("Standard error = ", round(std_err,2))
+
+        #draw a linear model
+        regr = linear_model.LinearRegression()
+        x = conc[:,np.newaxis]
+        model=regr.fit(x,asb)
+        yfit=model.predict(x)
+
+        #generate annotation
+        if intercept > 0:
+            intercept = "+ " + str(round(intercept))
+        else:
+            intercept = "- " + str(round(abs(intercept)))
+        print(intercept)
+        r2 = r'$R^{2}$ = ' + str(round(r_value**2,3))
+        equation = 'asb = ' + str(round(slope,2)) +' x conc (μg/μL) ' + str(intercept)
+        fig, ax = plt.subplots(figsize=(5,5))
+        ax.scatter(conc, asb, color='grey', alpha=0.5)
+        ax.plot(x,yfit)
+
+        #get coordinates for x and y position for text
+        x0, xmax = plt.xlim()
+        y0, ymax = plt.ylim()
+        data_width = xmax - x0
+        data_height = ymax-y0
+        x_position = x0 + 0.05*data_width
+        y_position = y0 + 0.93*data_height
+        y_position_r = y0 + 0.88*data_height
+        ax.text(x_position,y_position,s=equation, fontsize=12, fontstyle='normal')
+        ax.text(x_position, y_position_r,r2, fontsize=12)
+        ax.set_xlabel('Conc (μg/μL)', fontweight='bold')
+        ax.set_ylabel('A595', fontweight='bold')
+        plt.show()
+
     def bradford(path, slope, y_inter, loadingdye_conc=4):
         """
         This method converts UV-vis absorbance at 595 nm into protein concentration and generates an Excel table
@@ -151,58 +207,3 @@ class ProteinQuan():
         ws.column_dimensions['I'].width = 20
         wb.save(path+'/'+file)
 
-    def standard_curve(dilution=1):
-        """
-        Input the concentrations of standard (e.g., BSA) in microgram per microliter and to corresponding A595 to
-        get the standard curve
-        :return: a plot of linear regression with the equation and R square printed on the plot.
-        """
-        conc = np.array([]) #empty arrays for data input
-        asb = np.array([])
-
-        sample_size = int(input('How many standards: '))
-        for i in range(sample_size): #use for loop to inquire the concentration and A595 of standards sequentially
-            i = i+1
-            c = float(input('Concentration (ug/uL) for standard No.'+str(i)+': '))
-            a = float(input('A595 for standard No.'+str(i)+': '))
-            conc = np.append(conc,c)
-            asb = np.append(asb,a)
-
-        #calculate related statistics for linear regression
-        slope, intercept, r_value, p_value, std_err = stats.linregress(conc,asb,)
-        print("Slope = ", round(slope,3))
-        print("Intercept = ", round(intercept,2))
-        print("R-squared = ", round(r_value ** 2,2))
-        print("Standard error = ", round(std_err,2))
-
-        #draw a linear model
-        regr = linear_model.LinearRegression()
-        x = conc[:,np.newaxis]
-        model=regr.fit(x,asb)
-        yfit=model.predict(x)
-
-        #generate annotation
-        if intercept > 0:
-            intercept = "+ " + str(round(intercept))
-        else:
-            intercept = "- " + str(round(abs(intercept)))
-        print(intercept)
-        r2 = r'$R^{2}$ = ' + str(round(r_value**2,3))
-        equation = 'asb = ' + str(round(slope,2)) +' x conc (μg/μL) ' + str(intercept)
-        fig, ax = plt.subplots(figsize=(5,5))
-        ax.scatter(conc, asb, color='grey', alpha=0.5)
-        ax.plot(x,yfit)
-
-        #get coordinates for x and y position for text
-        x0, xmax = plt.xlim()
-        y0, ymax = plt.ylim()
-        data_width = xmax - x0
-        data_height = ymax-y0
-        x_position = x0 + 0.05*data_width
-        y_position = y0 + 0.93*data_height
-        y_position_r = y0 + 0.88*data_height
-        ax.text(x_position,y_position,s=equation, fontsize=12, fontstyle='normal')
-        ax.text(x_position, y_position_r,r2, fontsize=12)
-        ax.set_xlabel('Conc (μg/μL)', fontweight='bold')
-        ax.set_ylabel('A595', fontweight='bold')
-        plt.show()
